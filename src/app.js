@@ -3,7 +3,7 @@ const cors = require("cors");
 
 const productRoutes = require("./routes/product.routes");
 const userRoutes = require("./routes/user.routes");
-const cartRoutes = require("./routes/cartRoutes");
+const cartRoutes = require("./routes/cart.routes");
 
 const app = express();
 
