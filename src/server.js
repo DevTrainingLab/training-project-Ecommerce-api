@@ -1,6 +1,20 @@
 require("dotenv").config();
 const app = require("./app");
-const connectDB = require("./config/db");
+const mongoose = require("mongoose");
+
+// الاتصال بـ MongoDB مع timeout أكبر و error handling
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000, // 30 ثانية بدل 10
+    });
+    console.log("MongoDB connected");
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+  }
+};
 
 connectDB();
 
