@@ -1,0 +1,33 @@
+{
+  "name": "training-project-ecommerce-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.2.1",
+    "whatwg-url": "^14.2.0",
+    "wrappy": "^1.0.2"
+  },
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevTrainingLab/training-project-Ecommerce-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DevTrainingLab/training-project-Ecommerce-api/issues"
+  },
+  "homepage": "https://github.com/DevTrainingLab/training-project-Ecommerce-api#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
