@@ -1,18 +1,19 @@
+// routes/user.routes.js
 const express = require("express");
 const router = express.Router();
-const { signup, login } = require("../controllers/user.controller");
-const { getMe } = require("../controllers/user.controller");
+const {
+  signup,
+  login,
+  getMe,
+  updateProfile,
+  updatePassword,
+} = require("../controllers/user.controller");
 const { protect } = require("../middlewares/auth.middleware");
 
-// إنشاء حساب
 router.post("/signup", signup);
-
-// تسجيل دخول
 router.post("/login", login);
-
-// الحصول على بيانات المستخدم الحالي
 router.get("/me", protect, getMe);
-
-router.put("/me/password", protect, updatePassword);
+router.put("/me", protect, updateProfile); // لتحديث بيانات المستخدم
+router.put("/me/password", protect, updatePassword); // لتحديث الباسوورد
 
 module.exports = router;

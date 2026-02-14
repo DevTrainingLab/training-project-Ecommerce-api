@@ -1,6 +1,7 @@
+// controllers/user.controller.js
 const User = require("../models/user.modal");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // توليد JWT
 const generateToken = (id) => {
@@ -14,9 +15,8 @@ const signup = async (req, res) => {
   const { firstName, lastName, email, password, phone } = req.body;
   try {
     const userExists = await User.findOne({ email });
-    if (userExists) {
+    if (userExists)
       return res.status(400).json({ message: "User already exists" });
-    }
 
     const user = await User.create({
       firstName,
@@ -31,7 +31,6 @@ const signup = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      phone: user.phone,
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -45,14 +44,13 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email }).select("+password");
-    if (user && (await user.matchPassword(password))) {
+    const user = await User.findOne({ email });
+    if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        phone: user.phone,
         token: generateToken(user._id),
       });
     } else {
@@ -64,7 +62,7 @@ const login = async (req, res) => {
 };
 
 // =======================
-// الحصول على بيانات المستخدم الحالي
+// جلب بيانات اليوزر الحالي
 // =======================
 const getMe = async (req, res) => {
   res.status(200).json({
@@ -74,36 +72,48 @@ const getMe = async (req, res) => {
 };
 
 // =======================
+// تحديث بيانات المستخدم
+// =======================
+const updateProfile = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const { firstName, lastName, email, phone } = req.body;
+
+  user.firstName = firstName || user.firstName;
+  user.lastName = lastName || user.lastName;
+  user.email = email || user.email;
+  user.phone = phone || user.phone;
+
+  await user.save();
+
+  res.status(200).json({
+    _id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phone: user.phone,
+    token: generateToken(user._id),
+  });
+};
+
+// =======================
 // تحديث الباسوورد
 // =======================
 const updatePassword = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
   const { currentPassword, newPassword } = req.body;
 
-  try {
-    const user = await User.findById(req.user._id).select("+password");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // تحقق من الباسوورد الحالي
-    const isMatch = await user.matchPassword(currentPassword);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
-    }
-
-    user.password = newPassword; // هيتعمل له hash تلقائي في pre-save
-    await user.save();
-
-    res.status(200).json({ message: "Password updated successfully" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  if (!(await bcrypt.compare(currentPassword, user.password))) {
+    return res.status(400).json({ message: "Current password is incorrect" });
   }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({ message: "Password updated successfully" });
 };
 
-module.exports = {
-  signup,
-  login,
-  getMe,
-  updatePassword,
-};
+module.exports = { signup, login, getMe, updateProfile, updatePassword };
