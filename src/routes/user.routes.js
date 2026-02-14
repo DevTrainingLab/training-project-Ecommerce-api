@@ -13,7 +13,7 @@ const { protect } = require("../middlewares/auth.middleware");
 router.post("/signup", signup);
 router.post("/login", login);
 router.get("/me", protect, getMe);
-router.put("/me", protect, updateProfile); // لتحديث بيانات المستخدم
-router.put("/me/password", protect, updatePassword); // لتحديث الباسوورد
+router.patch("/me", protect, updateProfile);
+router.patch("/me/password", protect, updatePassword);
 
 module.exports = router;
