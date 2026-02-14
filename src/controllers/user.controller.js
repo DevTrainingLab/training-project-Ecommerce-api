@@ -11,19 +11,27 @@ const generateToken = (id) => {
 // تسجيل حساب جديد (Sign Up)
 // =======================
 const signup = async (req, res) => {
-  const { name, phoneOrEmail, password } = req.body;
+  const { firstName, lastName, email, password, phone } = req.body;
   try {
-    const userExists = await User.findOne({ phoneOrEmail });
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const user = await User.create({ name, phoneOrEmail, password });
+    const user = await User.create({
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+    });
 
     res.status(201).json({
       _id: user._id,
-      name: user.name,
-      phoneOrEmail: user.phoneOrEmail,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -35,32 +43,67 @@ const signup = async (req, res) => {
 // تسجيل دخول (Login)
 // =======================
 const login = async (req, res) => {
-  const { phoneOrEmail, password } = req.body;
+  const { email, password } = req.body;
   try {
-    const user = await User.findOne({ phoneOrEmail });
-    if (user && (await bcrypt.compare(password, user.password))) {
+    const user = await User.findOne({ email }).select("+password");
+    if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user._id,
-        name: user.name,
-        phoneOrEmail: user.phoneOrEmail,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
         token: generateToken(user._id),
       });
     } else {
-      res.status(401).json({ message: "Invalid phone/email or password" });
+      res.status(401).json({ message: "Invalid email or password" });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-const getMe = async (req, res, next) => {
+
+// =======================
+// الحصول على بيانات المستخدم الحالي
+// =======================
+const getMe = async (req, res) => {
   res.status(200).json({
     success: true,
     data: req.user,
   });
 };
 
+// =======================
+// تحديث الباسوورد
+// =======================
+const updatePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // تحقق من الباسوورد الحالي
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = newPassword; // هيتعمل له hash تلقائي في pre-save
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   signup,
   login,
   getMe,
+  updatePassword,
 };

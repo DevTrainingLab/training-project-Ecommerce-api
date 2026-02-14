@@ -13,4 +13,6 @@ router.post("/login", login);
 // الحصول على بيانات المستخدم الحالي
 router.get("/me", protect, getMe);
 
+router.put("/me/password", protect, updatePassword);
+
 module.exports = router;
