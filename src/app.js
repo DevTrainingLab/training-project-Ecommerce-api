@@ -5,7 +5,7 @@ const productRoutes = require("./routes/product.routes");
 const userRoutes = require("./routes/user.routes");
 const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
-const categoryRoutes = require("./routes/category.router");
+const categoryRoutes = require("./routes/category.routes");
 const app = express();
 
 app.use(cors());
