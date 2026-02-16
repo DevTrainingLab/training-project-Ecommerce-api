@@ -1,19 +1,61 @@
 const Product = require("../models/product.model");
 
 // Create Product
+const Product = require("../models/product.model");
+const Category = require("../models/category.model");
+
+// Create Product
 exports.createProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const { category, ...rest } = req.body;
+
+    const categoryDoc = await Category.findOne({ slug: category });
+    if (!categoryDoc) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    const product = await Product.create({
+      ...rest,
+      category: categoryDoc._id,
+    });
+
     res.status(201).json(product);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// Get All Products
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const { category, minPrice, maxPrice, search } = req.query;
+
+    let filter = {};
+
+    // فلترة بالكاتيجوري (slug)
+    if (category) {
+      const categoryDoc = await Category.findOne({ slug: category });
+      if (!categoryDoc) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      filter.category = categoryDoc._id;
+    }
+
+    // فلترة بالسعر
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    // بحث بالاسم
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
+    }
+
+    const products = await Product.find(filter)
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 });
+
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
