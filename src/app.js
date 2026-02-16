@@ -8,7 +8,29 @@ const orderRoutes = require("./routes/order.routes");
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+const allowedOrigins = [
+  "http://localhost:5172",
+  "http://localhost:5173/",
+  "http://localhost:5174/",
+  "http://localhost:5175/",
+  "http://localhost:5176/",
+  "http://localhost:5177/",
+  "http://localhost:5178/",
+  "http://localhost:5179/",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
