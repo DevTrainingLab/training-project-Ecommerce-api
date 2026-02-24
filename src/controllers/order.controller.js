@@ -73,7 +73,7 @@ const getOrderById = async (req, res) => {
 };
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("user", "firstName email");
+    const orders = await Order.find();
 
     res.json(orders);
   } catch (err) {
