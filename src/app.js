@@ -11,6 +11,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use("/", (req, res, next) => {
+  res.status(200).json({ message: "Welcome to the E-commerce API!" });
+  next();
+});
+app.use("/api", (req, res, next) => {
+  res.status(200).json({ message: "API is running!" });
+  next();
+});
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
