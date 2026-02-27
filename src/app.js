@@ -11,9 +11,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.route("/").get((req, res) => {
-  res.send("Welcome to E-commerce API");
-});
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/products", productRoutes);
