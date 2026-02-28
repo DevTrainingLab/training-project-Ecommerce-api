@@ -1,23 +1,26 @@
 const Order = require("../models/order.model");
-const Cart  = require("../models/cart.model");
+const Cart = require("../models/cart.model");
 
 // ── Create Order ──────────────────────────────────────────────────
 const createOrder = async (req, res) => {
   try {
-    const { shippingAddress, paymentMethod, subtotal, discount, total } = req.body;
+    const { shippingAddress, paymentMethod, subtotal, discount, total } =
+      req.body;
 
-    const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
+    const cart = await Cart.findOne({ user: req.user._id }).populate(
+      "items.product"
+    );
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
     const orderItems = cart.items.map((item) => ({
-      product:  item.product._id,
-      title:    item.product.title,
-      price:    item.product.price,
+      product: item.product._id,
+      title: item.product.title,
+      price: item.product.price,
       quantity: item.quantity,
-      image:    item.product.images?.[0],
+      image: item.product.images?.[0],
     }));
 
     const order = await Order.create({
@@ -43,7 +46,9 @@ const createOrder = async (req, res) => {
 // ── Get My Orders ─────────────────────────────────────────────────
 const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user._id }).sort({
+      createdAt: -1,
+    });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -53,7 +58,10 @@ const getMyOrders = async (req, res) => {
 // ── Get Order By ID ───────────────────────────────────────────────
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate("user", "firstName email");
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "firstName email"
+    );
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
   } catch (err) {
@@ -64,7 +72,9 @@ const getOrderById = async (req, res) => {
 // ── Get All Orders (Admin) ────────────────────────────────────────
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("user", "firstName email").sort({ createdAt: -1 });
+    const orders = await Order.find()
+      .populate("user", "firstName email")
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -77,8 +87,8 @@ const updateDeliveryStatus = async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    order.isDelivered  = req.body.isDelivered ?? !order.isDelivered;
-    order.deliveredAt  = order.isDelivered ? new Date() : null;
+    order.isDelivered = req.body.isDelivered ?? !order.isDelivered;
+    order.deliveredAt = order.isDelivered ? new Date() : null;
 
     await order.save();
     res.json(order);
@@ -93,8 +103,8 @@ const updatePaymentStatus = async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    order.isPaid     = req.body.isPaid ?? !order.isPaid;
-    order.paidAt     = order.isPaid ? new Date() : null;
+    order.isPaid = req.body.isPaid ?? !order.isPaid;
+    order.paidAt = order.isPaid ? new Date() : null;
     if (req.body.paymentMethod) order.paymentMethod = req.body.paymentMethod;
 
     await order.save();
@@ -113,8 +123,8 @@ const updateOrder = async (req, res) => {
     const { isPaid, isDelivered, paymentMethod } = req.body;
 
     if (typeof isPaid !== "undefined") {
-      order.isPaid  = isPaid;
-      order.paidAt  = isPaid ? new Date() : null;
+      order.isPaid = isPaid;
+      order.paidAt = isPaid ? new Date() : null;
     }
 
     if (typeof isDelivered !== "undefined") {
@@ -145,7 +155,7 @@ const getTotalSales = async (req, res) => {
   try {
     const result = await Order.aggregate([
       { $match: { isPaid: true } }, // بس الأوردرات المدفوعة
-      { $group: { _id: null, totalSales: { $sum: "$total" } } }
+      { $group: { _id: null, totalSales: { $sum: "$total" } } },
     ]);
 
     const totalSales = result[0]?.totalSales ?? 0;
@@ -163,5 +173,5 @@ module.exports = {
   updatePaymentStatus,
   updateOrder,
   deleteOrder,
-  getTotalSales
+  getTotalSales,
 };
