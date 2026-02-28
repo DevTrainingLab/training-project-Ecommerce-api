@@ -1,12 +1,24 @@
 const Product = require("../models/product.model");
 const Category = require("../models/category.model");
+const mongoose = require("mongoose");
 
-// Create Product
+// ── Helper: find category by _id OR slug ──────────────────────────
+const findCategory = async (value) => {
+  if (!value) return null;
+  // If it looks like a MongoDB ObjectId → find by _id
+  if (mongoose.Types.ObjectId.isValid(value)) {
+    return await Category.findById(value);
+  }
+  // Otherwise treat as slug
+  return await Category.findOne({ slug: value });
+};
+
+// ── Create Product ────────────────────────────────────────────────
 exports.createProduct = async (req, res) => {
   try {
     const { category, ...rest } = req.body;
 
-    const categoryDoc = await Category.findOne({ slug: category });
+    const categoryDoc = await findCategory(category);
     if (!categoryDoc) {
       return res.status(404).json({ message: "Category not found" });
     }
@@ -22,31 +34,28 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+// ── Get All Products ──────────────────────────────────────────────
 exports.getProducts = async (req, res) => {
   try {
     const { category, minPrice, maxPrice, search } = req.query;
-
     let filter = {};
 
-    // فلترة بالكاتيجوري (slug)
     if (category) {
-      const categoryDoc = await Category.findOne({ slug: category });
+      const categoryDoc = await findCategory(category);
       if (!categoryDoc) {
         return res.status(404).json({ message: "Category not found" });
       }
       filter.category = categoryDoc._id;
     }
 
-    // فلترة بالسعر
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // بحث بالاسم
     if (search) {
-      filter.name = { $regex: search, $options: "i" };
+      filter.title = { $regex: search, $options: "i" };
     }
 
     const products = await Product.find(filter)
@@ -59,42 +68,51 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-// Get Single Product
+// ── Get Single Product ────────────────────────────────────────────
 exports.getProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Not found" });
+    const product = await Product.findById(req.params.id).populate(
+      "category",
+      "name slug"
+    );
+    if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-// Update Product
+
+// ── Update Product ────────────────────────────────────────────────
 exports.updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true, // يرجع النسخة بعد التعديل
-      runValidators: true,
-    });
+    const { category, ...rest } = req.body;
+    let updateData = { ...rest };
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+    if (category) {
+      const categoryDoc = await findCategory(category);
+      if (!categoryDoc) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      updateData.category = categoryDoc._id;
     }
 
+    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate("category", "name slug");
+
+    if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
-// Delete Product
+
+// ── Delete Product ────────────────────────────────────────────────
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
+    if (!product) return res.status(404).json({ message: "Product not found" });
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
