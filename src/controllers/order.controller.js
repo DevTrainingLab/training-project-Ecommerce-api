@@ -141,7 +141,19 @@ const deleteOrder = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+const getTotalSales = async (req, res) => {
+  try {
+    const result = await Order.aggregate([
+      { $match: { isPaid: true } }, // بس الأوردرات المدفوعة
+      { $group: { _id: null, totalSales: { $sum: "$total" } } }
+    ]);
 
+    const totalSales = result[0]?.totalSales ?? 0;
+    res.json({ totalSales });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 module.exports = {
   createOrder,
   getMyOrders,
@@ -151,4 +163,5 @@ module.exports = {
   updatePaymentStatus,
   updateOrder,
   deleteOrder,
+  getTotalSales
 };
