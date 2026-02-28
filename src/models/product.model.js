@@ -42,7 +42,8 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
+  { bufferCommands: false }
 );
 
 module.exports = mongoose.model("Product", productSchema);
